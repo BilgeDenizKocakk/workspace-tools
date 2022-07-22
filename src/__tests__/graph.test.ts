@@ -2,7 +2,49 @@ import { PackageInfo } from "../types/PackageInfo";
 import { createPackageGraph } from "../graph";
 
 describe("createPackageGraph", () => {
-  it("namePatterns is an empty array", () => {
+
+  it("not setting scope gives entire graph", () => {
+    const allPackages = {
+      a: stubPackage("a", ["b"]),
+      b: stubPackage("b", ["c"], ["d"], ["e"]),
+      c: stubPackage("c"),
+      d: stubPackage("d"),
+      e: stubPackage("e")
+    };
+
+    const actual = createPackageGraph(allPackages);
+    expect(actual).toMatchInlineSnapshot(`
+    Object {
+      "dependencies": Array [
+        Object {
+          "dependency": "e",
+          "name": "b",
+        },
+        Object {
+          "dependency": "c",
+          "name": "b",
+        },
+        Object {
+          "dependency": "d",
+          "name": "b",
+        },
+        Object {
+          "dependency": "b",
+          "name": "a",
+        },
+      ],
+      "packages": Array [
+        "e",
+        "b",
+        "c",
+        "d",
+        "a",
+      ],
+    }
+  `);
+  });
+
+  it("namePatterns as an empty array returns an empty graph", () => {
     const allPackages = {
       a: stubPackage("a", ["b"]),
       b: stubPackage("b", ["c"]),
@@ -10,12 +52,15 @@ describe("createPackageGraph", () => {
     };
 
     const actual = createPackageGraph(allPackages, {namePatterns: [], includeDependencies: true});
-    /*
-    { packages: [], dependencies: [] }
-    */
+    expect(actual).toMatchInlineSnapshot(`
+      Object {
+        "dependencies": Array [],
+        "packages": Array [],
+      }
+    `);
   });
   
-  it("can exclude peer dependencies", () => {
+  it("can include peer dependencies", () => {
     const allPackages = {
       a: stubPackage("a", ["b"]),
       b: stubPackage("b", ["c"], ["d"], ["e"]),
@@ -46,7 +91,7 @@ describe("createPackageGraph", () => {
   });
 
 
-  it("can exclude development dependencies", () => {
+  it("can include development dependencies", () => {
     const allPackages = {
       a: stubPackage("a", ["b"]),
       b: stubPackage("b", ["c"], ["d"]),
